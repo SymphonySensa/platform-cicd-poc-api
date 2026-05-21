@@ -39,3 +39,17 @@ services:
              gunicorn config.wsgi:application --bind 0.0.0.0:8000 --reload"
     volumes:
       - ./app:/app
+
+  frontend:
+    image: node:20-alpine
+    working_dir: /frontend
+    environment:
+      VITE_API_URL: "http://api:8000/api"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    command: npm run dev -- --host 0.0.0.0
+    volumes:
+      - ./frontend:/frontend
+      - /frontend/node_modules

@@ -1,5 +1,18 @@
 # syntax=docker/dockerfile:1.7
-FROM python:3.12-slim AS builder
+
+# ── frontend builder ──────────────────────────────────────────────────────────
+FROM node:20-alpine AS frontend-builder
+
+WORKDIR /frontend
+
+COPY frontend/package*.json ./
+RUN npm ci
+
+COPY frontend/ .
+RUN npm run build
+
+# ── python dependencies ──────────────────────────────────────────────────────
+FROM python:3.12-slim AS py-builder
 
 WORKDIR /build
 
@@ -10,7 +23,7 @@ COPY app/requirements.txt .
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --prefix=/install -r requirements.txt
 
-# ── runtime ────────────────────────────────────────────────────────────────
+# ── runtime ──────────────────────────────────────────────────────────────────
 FROM python:3.12-slim AS runtime
 
 ARG APP_VERSION=dev
@@ -23,8 +36,12 @@ RUN addgroup --system app && adduser --system --ingroup app app
 
 WORKDIR /app
 
-COPY --from=builder /install /usr/local
+COPY --from=py-builder /install /usr/local
 COPY app/ .
+
+# Copy frontend build output to Django static directory
+RUN mkdir -p static/dist
+COPY --from=frontend-builder /frontend/dist static/dist/
 
 USER app
 
