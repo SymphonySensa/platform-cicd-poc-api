@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: error-rate
+  labels:
+    {{- include "platform-poc-api.labels" . | nindent 4 }}
+spec:
+  metrics:
+    - name: error-rate
+      interval: {{ .Values.analysis.interval }}
+      failureLimit: {{ .Values.analysis.failureLimit }}
+      # Pass as float — comparison: result[0] < threshold
+      successCondition: result[0] < {{ .Values.analysis.errorRateThreshold }}
+      failureCondition: result[0] >= {{ .Values.analysis.errorRateThreshold }}
+      provider:
+        prometheus:
+          address: {{ .Values.analysis.signozQueryServiceUrl }}
+          query: |
+            sum(rate(http_server_error_count_total{service_name="{{ .Values.otel.serviceName }}"}[2m]))
+            /
+            sum(rate(http_server_request_count_total{service_name="{{ .Values.otel.serviceName }}"}[2m]))
+
+    - name: p99-latency-ms
+      interval: {{ .Values.analysis.interval }}
+      failureLimit: {{ .Values.analysis.failureLimit }}
+      successCondition: result[0] < 500
+      provider:
+        prometheus:
+          address: {{ .Values.analysis.signozQueryServiceUrl }}
+          query: |
+            histogram_quantile(0.99,
+              sum by (le) (
+                rate(http_server_request_duration_milliseconds_bucket{service_name="{{ .Values.otel.serviceName }}"}[2m])
+              )
+            )

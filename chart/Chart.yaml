@@ -1,0 +1,6 @@
+apiVersion: v2
+name: platform-cicd-poc-api
+description: Transaction monitoring stub API — SCP CICD Framework POC
+type: application
+version: 0.1.0
+appVersion: "dev"

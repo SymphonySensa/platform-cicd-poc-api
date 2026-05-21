@@ -1,0 +1,10 @@
+django==4.2.17
+djangorestframework==3.15.2
+psycopg2-binary==2.9.9
+django-filter==24.3
+whitenoise==6.7.0
+gunicorn==22.0.0
+opentelemetry-sdk>=1.27.0,<2.0
+opentelemetry-instrumentation-django>=0.48b0
+opentelemetry-instrumentation-psycopg2>=0.48b0
+opentelemetry-exporter-otlp-proto-http>=1.27.0,<2.0

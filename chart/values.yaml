@@ -1,0 +1,63 @@
+replicaCount: 2
+
+image:
+  repository: platformpocacr.azurecr.io/platform-cicd-poc-api
+  tag: "latest"
+  digest: ""  # Kargo sets this after build; takes precedence over tag
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: ""
+
+service:
+  type: ClusterIP
+  port: 8000
+
+db:
+  host: ""
+  name: poc
+  user: poc
+  existingSecret: platform-cicd-poc-api-db  # Secret must contain key: password
+
+seed:
+  enabled: false  # load fixture data on init (dev/qa only)
+
+otel:
+  enabled: false
+  serviceName: platform-cicd-poc-api
+  endpoint: ""  # e.g. http://signoz-otel-collector.monitoring:4318
+  protocol: http/protobuf
+
+errorRate: "0"  # set to "0.3" on a canary to demo automatic rollback
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+rollout:
+  canary:
+    steps:
+      - setWeight: 20
+      - analysis:
+          templates:
+            - templateName: error-rate
+      - pause:
+          duration: 60s
+      - setWeight: 50
+      - analysis:
+          templates:
+            - templateName: error-rate
+      - pause:
+          duration: 60s
+      - setWeight: 100
+
+analysis:
+  signozQueryServiceUrl: http://signoz-query-service.monitoring:9090
+  errorRateThreshold: "0.05"
+  interval: 30s
+  failureLimit: 3

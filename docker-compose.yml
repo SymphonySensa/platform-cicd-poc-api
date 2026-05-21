@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: poc
+      POSTGRES_USER: poc
+      POSTGRES_PASSWORD: poc
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U poc"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build: .
+    environment:
+      DJANGO_DEBUG: "true"
+      DJANGO_SECRET_KEY: "local-dev-only"
+      DB_HOST: db
+      DB_NAME: poc
+      DB_USER: poc
+      DB_PASSWORD: poc
+      APP_VERSION: "dev"
+      ERROR_RATE: "0"
+      # Set OTEL_* vars here or via .env to point at your SigNoz collector
+      # OTEL_SERVICE_NAME: "platform-cicd-poc-api"
+      # OTEL_EXPORTER_OTLP_ENDPOINT: "http://<signoz-host>:4318"
+      # OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py loaddata transactions/fixtures/transactions.json &&
+             gunicorn config.wsgi:application --bind 0.0.0.0:8000 --reload"
+    volumes:
+      - ./app:/app

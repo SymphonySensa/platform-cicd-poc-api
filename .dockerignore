@@ -1,0 +1,12 @@
+.git
+.github
+.pre-commit-config.yaml
+**/__pycache__
+**/*.pyc
+**/*.pyo
+app/tests/
+app/.coverage
+app/htmlcov/
+*.md
+chart/
+.env*

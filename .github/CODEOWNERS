@@ -1,0 +1,14 @@
+# Platform POC API Code Owners
+
+# Default owners for all files
+* @dcortizo-nr
+
+# Backend changes require API owner review
+app/ @dcortizo-nr
+
+# CI/CD changes
+.github/workflows/ @dcortizo-nr
+
+# Container changes
+Dockerfile @dcortizo-nr
+docker-compose.yml @dcortizo-nr
